@@ -36,5 +36,8 @@ int main(int argc, char **argv, char **env) {
   }
   m_trace->close();
   computer->final();
+
+  delete m_trace;
+  m_trace = 0;
   return 0;
 }
