@@ -12,6 +12,10 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Create a new executable target that will contain all your sources
 add_executable(nandgame-sv sim_main.cpp)
 
+add_executable(nandgame-asm main.cpp Parser.cpp Lexer.cpp)
+
+set_property(TARGET nandgame-asm PROPERTY CXX_STANDARD 17)
+
 # Add the Verilated circuit to the target
 verilate(
   nandgame-sv COVERAGE TRACE
