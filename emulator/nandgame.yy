@@ -75,13 +75,16 @@
 
 %token <uint16_t> Number "Number"
 
-%type <uint16_t>  expr dst multi_asgn jump addr  opt_naddr opt_nd ci ci_opt_jump binary_op
+%type <uint16_t>  expr dst multi_asgn jump addr 
+                                 opt_naddr opt_nd ci 
+                                 ci_opt_jump binary_op
+                                 d_one addr_one
 
 %%
 s: expr { std::cout << $1 << std::endl;  }
 expr:  A Assign Number { $$ = $3; }
         | A Assign ci_opt_jump { $$ = make_expr(DstA, $3); }
-        | D Assign ci_opt_jump { $$ =  make_expr(DstD, $3);; }
+        | D Assign ci_opt_jump { $$ = make_expr(DstD, $3); }
         | AStar Assign ci_opt_jump { $$ =  make_expr(DstAStar, $3);  }
         | multi_asgn Assign ci_opt_jump { $$ = make_expr($1, $3); }
         | ci ";" jump { $$ =  make_expr(0, $1, $3); }
@@ -90,47 +93,51 @@ expr:  A Assign Number { $$ = $3; }
 multi_asgn: dst Comma dst Comma dst { $$ = $1 | $3 | $5; }
                    |dst Comma dst { $$ = $1 | $3; }
 
-dst: 
-       AStar { $$ = DstAStar; }
+dst: AStar { $$ = DstAStar; }
     | A { $$ = DstA; }
     | D { $$ = DstD; }
 
 addr: A { $$ = 0x00; } | AStar { $$ = 0x40; }
-addr_one: addr | One
-d_one: D | One
+addr_one: addr {  $$ = $1; }
+                | One
+d_one: D { $$ = 0x0; }
+          | One
 
-opt_naddr: 
-      Not addr { $$ = 0x26; }
-      | addr { $$ = 0x22; }
-opt_nd: 
-      Not D { $$ = 0x10; }
-      | D { $$ = 0xA;  }
+opt_naddr:  addr { $$ = 0x22; }
+                  | Not addr { $$ = 0x26; }
+
+opt_nd:  D { $$ = 0xA;  }
+            | Not D { $$ = 0x10; }
 
 ci_opt_jump:   ci { $$ = $1;  }
-                 | ci ";" jump { $$ = $1 | $3; }
+                     | ci ";" jump { $$ = $1 | $3; }
 
 binary_op: "+" { $$ = 0xFFFF; } 
-     | "&" { $$ = OP0; }
+                  | "&" { $$ = OP0; }
+
 
 ci:   opt_naddr { $$ = make_ci($1); }
-     | opt_nd { $$ = make_ci($1); }
-     | opt_naddr binary_op opt_nd {   $$ =make_ci(ZX0ZY0 & $2 & ( $1 | $3));  }
-     | opt_nd binary_op opt_naddr { $$ = make_ci(ZX0ZY0 & $2 & ( $1 | $3)); }
+     | opt_nd      { $$ = make_ci($1); }
+     | opt_naddr binary_op opt_nd { $$ = make_ci( ZX0ZY0 & $2 & ( $1 | $3) );  }
+     | opt_nd binary_op opt_naddr { $$ = make_ci( ZX0ZY0 & $2 & ( $1 | $3) );  }
 
-     | D "-" addr_one
-     | addr "-" d_one
+     | D "-" addr_one { $$ = 0x13 | $3; }
+     | addr "-" d_one { $$ = $1 | 0x7; }
 
-     | D "|" addr
-     | addr "|" D
+     | D "|" addr { $$ =  $3 | 0x15; }
+     | addr "|" D { $$ =  $1 | 0x15; }
 
-   //  | ADDR "+" One
-    // | D "+" One
+    // | addr "+" One
+    //|  D "+" One
 
-     | One
-     | Zero
 
-     | Minus addr
-     | Minus D
+     | Zero { $$ = 0x2A; }
+     | Minus One { $$ = 0x2B; }
+     | One { $$ = 0x3F; }
+
+     | Minus addr { $$ = 0x33 | $2; }
+     | Minus D { $$ = 0xF; }
+   
 
 jump:     
         JGT { $$ = 1; }
