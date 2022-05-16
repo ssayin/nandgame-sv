@@ -23,3 +23,6 @@ verilate(
   VERILATOR_ARGS -f input.vc -Os -x-assign 0
   SOURCES design/computer.sv
 )
+cmake_minimum_required(VERSION 3.10)
+
+add_subdirectory(emulator)
