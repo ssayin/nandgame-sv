@@ -5,8 +5,7 @@
 %}
 
 %{
-#define YY_DECL \ 
-    yy::parser::symbol_type yylex ()
+#define YY_DECL yy::parser::symbol_type yylex ()
 %}
 
 %option noyywrap

@@ -31,17 +31,22 @@
 
     constexpr uint16_t InstKindCI = 0x8000;
 
+    constexpr uint16_t ZX0 = 0xFFDF;
+    constexpr uint16_t ZY0 = 0xFFF7;
+    constexpr uint16_t ZX0ZY0 = ZX0 & ZY0;
+    constexpr uint16_t OP0 = 0xFFFD;
 
-  constexpr uint16_t to_op(uint16_t o) {
+
+  constexpr uint16_t make_ci(uint16_t o) {
       return (o << 6);
     }
 
-    constexpr uint16_t to_dest(uint16_t d) {
+    constexpr uint16_t make_dst(uint16_t d) {
       return (d << 3);
     }
 
-    constexpr uint16_t to_jump(uint16_t j) {
-      return j;
+    constexpr uint16_t make_expr(uint16_t destination, uint16_t sm_opcode, uint16_t jmp = 0) {
+      return make_dst(destination) | sm_opcode | jmp | InstKindCI;
     }
 
 }
@@ -70,70 +75,64 @@
 
 %token <uint16_t> Number "Number"
 
-%type <uint16_t>  EXPR DST MASGN J ADDR  NADDR ND CI CI_OPT_J
-
+%type <uint16_t>  expr dst multi_asgn jump addr  opt_naddr opt_nd ci ci_opt_jump binary_op
 
 %%
-
-S: EXPR { std::cout << $1 << std::endl;  }
-EXPR: 
-           A Assign Number { $$ = $3; }
-
-        | A Assign CI_OPT_J { $$ = to_dest(DstA) | to_op($3) | InstKindCI; }
-        | D Assign CI_OPT_J { $$ =  to_dest(DstD) | $3  | InstKindCI; }
-        | AStar Assign CI_OPT_J { $$ =  to_dest(DstAStar) | $3  | InstKindCI;  }
-        | MASGN Assign CI_OPT_J { $$ = to_dest($1) | $3  | InstKindCI; }
-
-        | CI ";" J { $$ =  InstKindCI | to_op($1); }
-        | JMP { $$ = InstKindCI | 0x7; }
+s: expr { std::cout << $1 << std::endl;  }
+expr:  A Assign Number { $$ = $3; }
+        | A Assign ci_opt_jump { $$ = make_expr(DstA, $3); }
+        | D Assign ci_opt_jump { $$ =  make_expr(DstD, $3);; }
+        | AStar Assign ci_opt_jump { $$ =  make_expr(DstAStar, $3);  }
+        | multi_asgn Assign ci_opt_jump { $$ = make_expr($1, $3); }
+        | ci ";" jump { $$ =  make_expr(0, $1, $3); }
+        | JMP {  $$ =  make_expr(0, 0, 0x7);  }
  
-MASGN: 
-       DST Comma DST Comma DST { $$ = $1 | $3 | $5; }
-    | DST Comma DST { $$ = $1 | $3; }
+multi_asgn: dst Comma dst Comma dst { $$ = $1 | $3 | $5; }
+                   |dst Comma dst { $$ = $1 | $3; }
 
-
-DST: 
+dst: 
        AStar { $$ = DstAStar; }
     | A { $$ = DstA; }
     | D { $$ = DstD; }
 
-ADDR: A { $$ = 0x00; } | AStar { $$ = 0x40; }
+addr: A { $$ = 0x00; } | AStar { $$ = 0x40; }
+addr_one: addr | One
+d_one: D | One
 
-NADDR: 
-      Not ADDR { $$ = 0x26; }
-      | ADDR { $$ = 0x22; }
-ND: 
+opt_naddr: 
+      Not addr { $$ = 0x26; }
+      | addr { $$ = 0x22; }
+opt_nd: 
       Not D { $$ = 0x10; }
       | D { $$ = 0xA;  }
 
-CI_OPT_J:   CI { $$ = $1;  }
-                 | CI ";" J { $$ = $1 | $3; }
+ci_opt_jump:   ci { $$ = $1;  }
+                 | ci ";" jump { $$ = $1 | $3; }
 
-CI:   NADDR
-     | NADDR "+" ND
-     | NADDR "&" ND
+binary_op: "+" { $$ = 0xFFFF; } 
+     | "&" { $$ = OP0; }
 
-     | ND { $$ = $1; }
-     | ND "+" NADDR
-     | ND "&" NADDR
+ci:   opt_naddr { $$ = make_ci($1); }
+     | opt_nd { $$ = make_ci($1); }
+     | opt_naddr binary_op opt_nd {   $$ =make_ci(ZX0ZY0 & $2 & ( $1 | $3));  }
+     | opt_nd binary_op opt_naddr { $$ = make_ci(ZX0ZY0 & $2 & ( $1 | $3)); }
 
-     | D "-" ADDR
-     | ADDR "-" D
-     | D "|" ADDR
-     | ADDR "|" D
+     | D "-" addr_one
+     | addr "-" d_one
 
-     | ADDR "+" One
-     | ADDR "-" One
-     | D "+" One
-     | D "-" One
+     | D "|" addr
+     | addr "|" D
+
+   //  | ADDR "+" One
+    // | D "+" One
 
      | One
      | Zero
 
-     | Minus ADDR
+     | Minus addr
      | Minus D
 
-J:     
+jump:     
         JGT { $$ = 1; }
      | JEQ { $$ = 2; }
      | JGE { $$ = 3; }
@@ -150,7 +149,7 @@ void yy::parser::error (const std::string& m) {
 
 
 int main() {
-  std::cout << "Input: " << std::flush;
+  std::cout << "Input: "  << std::flush;
   yy::parser parse;
   return parse();
 }
