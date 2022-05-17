@@ -15,6 +15,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <string>
+#include <bitset>
 }
 
 %define parse.trace
@@ -81,7 +82,7 @@
                                  d_one addr_one
 
 %%
-s: expr { std::cout << $1 << std::endl;  }
+s: expr { std::bitset<16> bits{$1}; std::cout << bits << std::endl;  }
 expr:  A Assign Number { $$ = $3; }
         | A Assign ci_opt_jump { $$ = make_expr(DstA, $3); }
         | D Assign ci_opt_jump { $$ = make_expr(DstD, $3); }
@@ -98,10 +99,12 @@ dst: AStar { $$ = DstAStar; }
     | D { $$ = DstD; }
 
 addr: A { $$ = 0x00; } | AStar { $$ = 0x40; }
-addr_one: addr {  $$ = $1; }
-                | One
-d_one: D { $$ = 0x0; }
-          | One
+
+addr_one: addr {  $$ = $1 | 0x13; }
+                | One { $$ = 0xE; }
+
+d_one: D { $$ = 0x7; }
+          | One {$$ = 0x32; }
 
 opt_naddr:  addr { $$ = 0x22; }
                   | Not addr { $$ = 0x26; }
@@ -121,22 +124,22 @@ ci:   opt_naddr { $$ = make_ci($1); }
      | opt_naddr binary_op opt_nd { $$ = make_ci( ZX0ZY0 & $2 & ( $1 | $3) );  }
      | opt_nd binary_op opt_naddr { $$ = make_ci( ZX0ZY0 & $2 & ( $1 | $3) );  }
 
-     | D "-" addr_one { $$ = 0x13 | $3; }
-     | addr "-" d_one { $$ = $1 | 0x7; }
+     | D "-" addr_one { $$ = make_ci($3); }
+     | addr "-" d_one { $$ = make_ci( $1 | $3); }
 
-     | D "|" addr { $$ =  $3 | 0x15; }
-     | addr "|" D { $$ =  $1 | 0x15; }
+     | D "|" addr { $$ =   make_ci( $3 | 0x15); }
+     | addr "|" D { $$ =   make_ci( $1 | 0x15); }
 
     // | addr "+" One
     //|  D "+" One
 
 
-     | Zero { $$ = 0x2A; }
-     | Minus One { $$ = 0x2B; }
-     | One { $$ = 0x3F; }
+     | Zero { $$ =  make_ci( 0x2A); }
+     | Minus One { $$ =  make_ci( 0x2B); }
+     | One { $$ =  make_ci( 0x3F); }
 
-     | Minus addr { $$ = 0x33 | $2; }
-     | Minus D { $$ = 0xF; }
+     | Minus addr { $$ =  make_ci( 0x33 | $2); }
+     | Minus D { $$ = make_ci(  0xF); }
    
 
 jump:     
