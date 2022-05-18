@@ -1,3 +1,7 @@
+`include "defs.sv"
+
+import defs::*;
+
 module control (
     input logic clk,
     input inst_word_t inst,
@@ -11,8 +15,8 @@ module control (
   logic [15 : 0] alu_Y;
   logic [15 : 0] alu_out;
 
-  logic [15 : 0] D;
-  logic [15 : 0] A_star;
+  logic [15 : 0] D  /*verilator public_flat_rd*/;
+  logic [15 : 0] A_star  /*verilator public_flat_rd*/;
 
 
   inst_decoder decoder (

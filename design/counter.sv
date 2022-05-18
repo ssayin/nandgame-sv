@@ -1,3 +1,7 @@
+`include "defs.sv"
+
+import defs::*;
+
 module counter #(
     parameter int WIDTH = 16
 ) (

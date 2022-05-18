@@ -14,8 +14,18 @@ add_flex_bison_dependency(lexer parser)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_executable(
-  emulator
+  interactive
+  interactive.cpp
   ${BISON_parser_OUTPUTS}
   ${FLEX_lexer_OUTPUTS}
 )
 
+# set_property(TARGET nandgame-asm PROPERTY CXX_STANDARD 17)
+
+# Add the Verilated circuit to the target
+verilate(
+  interactive COVERAGE TRACE
+  INCLUDE_DIRS "../design"
+  VERILATOR_ARGS -f ../input.vc -Os --vpi -x-assign 0
+  SOURCES ../design/control.sv
+)

@@ -22,9 +22,21 @@
 %define parse.error detailed
 
 %code {
+
+
 #define YY_DECL \ 
     yy::parser::symbol_type yylex ()
     YY_DECL;
+
+struct Inst {
+  uint16_t m_inst;
+};
+
+    static std::aligned_storage_t<sizeof(Inst),
+                              std::alignment_of<Inst>::value>
+    inst_buf;
+
+    Inst &inst = reinterpret_cast<Inst&>(inst_buf);
 
     constexpr uint16_t DstA = 0x4;
     constexpr uint16_t DstD = 0x2;
@@ -82,7 +94,7 @@
                                  d_one addr_one
 
 %%
-s: expr { std::bitset<16> bits{$1}; std::cout << bits << std::endl;  }
+s: expr { std::bitset<16> bits{$1}; std::cout << bits << std::endl; inst.m_inst = $1; }
 expr:  A Assign Number { $$ = $3; }
         | A Assign ci_opt_jump { $$ = make_expr(DstA, $3); }
         | D Assign ci_opt_jump { $$ = make_expr(DstD, $3); }
@@ -121,6 +133,7 @@ binary_op: "+" { $$ = 0xFFFF; }
 
 ci:   opt_naddr { $$ = make_ci($1); }
      | opt_nd      { $$ = make_ci($1); }
+     
      | opt_naddr binary_op opt_nd { $$ = make_ci( ZX0ZY0 & $2 & ( $1 | $3) );  }
      | opt_nd binary_op opt_naddr { $$ = make_ci( ZX0ZY0 & $2 & ( $1 | $3) );  }
 
@@ -155,11 +168,4 @@ jump:
 
 void yy::parser::error (const std::string& m) {
   std::cerr << m << std::endl;
-}
-
-
-int main() {
-  std::cout << "Input: "  << std::flush;
-  yy::parser parse;
-  return parse();
 }
