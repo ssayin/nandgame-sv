@@ -22,15 +22,12 @@
 %define parse.error detailed
 
 %code {
+  #include "inst.hpp"
 
 
 #define YY_DECL \ 
     yy::parser::symbol_type yylex ()
     YY_DECL;
-
-struct Inst {
-  uint16_t m_inst;
-};
 
     static std::aligned_storage_t<sizeof(Inst),
                               std::alignment_of<Inst>::value>
@@ -92,6 +89,8 @@ struct Inst {
                                  opt_naddr opt_nd ci 
                                  ci_opt_jump binary_op
                                  d_one addr_one
+                                 opt_naddr_one
+                                 opt_nd_one
 
 %%
 s: expr { std::bitset<16> bits{$1}; std::cout << bits << std::endl; inst.m_inst = $1; }
@@ -118,11 +117,15 @@ addr_one: addr {  $$ = $1 | 0x13; }
 d_one: D { $$ = 0x7; }
           | One {$$ = 0x32; }
 
-opt_naddr:  addr { $$ = 0x22; }
-                  | Not addr { $$ = 0x26; }
+opt_naddr:  addr { $$ = 0x22 | $1; }
+                  | Not addr { $$ = 0x26 | $2;  }
+
+opt_naddr_one: opt_naddr { $$ = $1; } | One { $$ = 0x1F; }
 
 opt_nd:  D { $$ = 0xA;  }
             | Not D { $$ = 0x10; }
+
+opt_nd_one: opt_nd { $$ = $1; } | One { $$ = 0x37; }
 
 ci_opt_jump:   ci { $$ = $1;  }
                      | ci ";" jump { $$ = $1 | $3; }
@@ -134,18 +137,14 @@ binary_op: "+" { $$ = 0xFFFF; }
 ci:   opt_naddr { $$ = make_ci($1); }
      | opt_nd      { $$ = make_ci($1); }
      
-     | opt_naddr binary_op opt_nd { $$ = make_ci( ZX0ZY0 & $2 & ( $1 | $3) );  }
-     | opt_nd binary_op opt_naddr { $$ = make_ci( ZX0ZY0 & $2 & ( $1 | $3) );  }
+     | opt_naddr binary_op opt_nd_one { $$ = ($3 == 0x37) ? (($1 > 0x26) ? make_ci( 0x40 | $3) : make_ci($3)) : make_ci( ZX0ZY0 & $2 & ( $1 | $3) );  }
+     | opt_nd binary_op opt_naddr_one { $$ = ($3 == 0x1F) ? make_ci($3) : make_ci( ZX0ZY0 & $2 & ( $1 | $3) );  }
 
      | D "-" addr_one { $$ = make_ci($3); }
      | addr "-" d_one { $$ = make_ci( $1 | $3); }
 
      | D "|" addr { $$ =   make_ci( $3 | 0x15); }
      | addr "|" D { $$ =   make_ci( $1 | 0x15); }
-
-    // | addr "+" One
-    //|  D "+" One
-
 
      | Zero { $$ =  make_ci( 0x2A); }
      | Minus One { $$ =  make_ci( 0x2B); }

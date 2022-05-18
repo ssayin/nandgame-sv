@@ -39,6 +39,11 @@ void read_handles_vpi() {
   }
 }
 
+int parse() {
+  yy::parser p;
+  return p();
+}
+
 int main(int argc, char **argv, char **env) {
   const std::unique_ptr<VerilatedContext> contextp{new VerilatedContext};
 
@@ -55,9 +60,9 @@ int main(int argc, char **argv, char **env) {
   while (i < 50) {
     i++;
     contextp->timeInc(1); // 1 timeprecision period passes...
-    std::cout << "Input: " << std::flush;
-    yy::parser parse;
-    parse();
+    do {
+      std::cout << "Input: " << std::flush;
+    } while (parse()); // get input until no parser err
     cont->inst = inst.m_inst;
     cont->eval();
 
