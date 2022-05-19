@@ -11,6 +11,8 @@
 %option noyywrap
 
 %%
+0[0-7]+  { return yy::parser::make_Number(strtol(yytext, NULL, 8)); }
+0[xX][0-9a-fA-F]+  { return yy::parser::make_Number(strtol(yytext, NULL, 16)); }
 "1"     { return yy::parser::make_One(); }
 "0"     { return yy::parser::make_Zero(); }
 [0-9]+  { return yy::parser::make_Number(strtol(yytext, NULL, 10)); }
