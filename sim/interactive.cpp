@@ -41,7 +41,14 @@ void read_handles_vpi() {
 
 int parse() {
   yy::parser p;
-  return p();
+  int ret;
+
+  try {
+    ret = p();
+  } catch (yy::parser::syntax_error &err) {
+    ret = -1;
+  }
+  return ret;
 }
 
 int main(int argc, char **argv, char **env) {
