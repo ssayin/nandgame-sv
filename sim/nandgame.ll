@@ -6,16 +6,17 @@
 
 %{
 #define YY_DECL yy::parser::symbol_type yylex ()
+ yy::parser::symbol_type make_Number(const std::string& str, int base);
 %}
 
 %option noyywrap
 
 %%
-0[0-7]+  { return yy::parser::make_Number(strtol(yytext, NULL, 8)); }
-0[xX][0-9a-fA-F]+  { return yy::parser::make_Number(strtol(yytext, NULL, 16)); }
+0[0-7]+  { return make_Number(yytext, 8); }
+0[xX][0-9a-fA-F]+  { return make_Number(yytext, 16); }
 "1"     { return yy::parser::make_One(); }
 "0"     { return yy::parser::make_Zero(); }
-[0-9]+  { return yy::parser::make_Number(strtol(yytext, NULL, 10)); }
+[0-9]+  { return make_Number(yytext, 10); }
 "+"     { return yy::parser::make_Plus(); }
 "-"     { return yy::parser::make_Minus(); }
 "&"     { return yy::parser::make_And(); }
@@ -44,3 +45,11 @@
                     exit(1);
                     }
 %%
+
+ yy::parser::symbol_type make_Number(const std::string& str, int base) {
+  constexpr uint16_t MAX_ADDR = 0x7FFF;
+  uint16_t ret = strtol(str.c_str(), NULL, base);
+  if (0 > ret || ret > MAX_ADDR)
+    throw yy::parser::syntax_error ("unsigned integer limit is: 0x7FFF, you gave  " + str);
+  return yy::parser::make_Number(ret);
+ }
