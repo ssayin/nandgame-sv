@@ -9,6 +9,9 @@
  yy::parser::symbol_type make_Number(const std::string& str, int base);
 %}
 
+iddef [a-zA-Z][a-zA-Z_0-9]*
+dec [0-9]+
+
 %option noyywrap
 
 %%
@@ -17,7 +20,7 @@
 0[xX][0-9a-fA-F]+  { return make_Number(yytext, 16); }
 "1"     { return yy::parser::make_One(); }
 "0"     { return yy::parser::make_Zero(); }
-[0-9]+  { return make_Number(yytext, 10); }
+{dec}  { return make_Number(yytext, 10); }
 "+"     { return yy::parser::make_Plus(); }
 "-"     { return yy::parser::make_Minus(); }
 "&"     { return yy::parser::make_And(); }
@@ -39,6 +42,10 @@
 "\n"    { return yy::parser::make_YYEOF(); }
 <<EOF>> { return yy::parser::make_YYEOF(); }
 [ \t]+  {  }
+"LABEL" { std::cout << "got label" << std::endl; }
+"DEFINE" { std::cout << "got define" << std::endl; }
+{iddef} { std::cout << "got def identifier" << std::endl; }
+
 .       { std::cerr << "lexer: token \"" 
                     << yytext[0] 
                     << "\" is not expected" 
