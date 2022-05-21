@@ -63,12 +63,10 @@ int main(int argc, char **argv, char **env) {
   contextp->internalsDump();
 
   cont->clk = 0;
-  int i = 0;
-  while (i < 50) {
-    i++;
+  while (true) {
     contextp->timeInc(1); // 1 timeprecision period passes...
     do {
-      std::cout << "Input: " << std::flush;
+      std::cout << ">> " << std::flush;
     } while (parse()); // get input until no parser err
     cont->inst = inst.m_inst;
     cont->eval();

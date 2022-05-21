@@ -17,23 +17,30 @@ octal 0[0-7]+
 %option noyywrap
 
 %%
+[ \t]+ ; 
 ^#.*$ { std::cout << "skipping comment line" << std::endl; }
-{octal} { return make_Number(yytext, 8); }
-{hex} { return make_Number(yytext, 16); }
+
 "1"     { return yy::parser::make_One(); }
 "0"     { return yy::parser::make_Zero(); }
+
+
+"D"     { return yy::parser::make_D(); }
+"A"     { return yy::parser::make_A();}
+"*A"    { return yy::parser::make_AStar(); }
+
+{octal} { return make_Number(yytext, 8); }
 {dec}  { return make_Number(yytext, 10); }
+{hex} { return make_Number(yytext, 16); }
+
 "+"     { return yy::parser::make_Plus(); }
 "-"     { return yy::parser::make_Minus(); }
 "&"     { return yy::parser::make_And(); }
 "~"     { return yy::parser::make_Not(); }
-"D"     { return yy::parser::make_D(); }
-"*A"    { return yy::parser::make_AStar(); }
-"A"     { return yy::parser::make_A();}
 ";"     { return yy::parser::make_Semicolon(); }
 ","     { return yy::parser::make_Comma(); }
 "="     { return yy::parser::make_Assign(); }
 "|"     { return yy::parser::make_Or(); }
+
 "JGT"   { return yy::parser::make_JGT();  }
 "JEQ"   {  return yy::parser::make_JEQ(); }
 "JGE"   { return yy::parser::make_JGE();  }
@@ -41,10 +48,10 @@ octal 0[0-7]+
 "JNE"   { return yy::parser::make_JNE(); }
 "JLE"   { return yy::parser::make_JLE();  }
 "JMP"   { return yy::parser::make_JMP();  }
-"\n"    { return yy::parser::make_YYEOF(); }
-<<EOF>> { return yy::parser::make_YYEOF(); }
-[ \t]+  {  }
-"LABEL" { std::cout << "got label" << std::endl; }
+
+"\n" { return yy::parser::make_YYEOF(); }
+
+"LABEL" { return yy::parser::make_LABEL(); }
 "DEFINE" { return yy::parser::make_DEFINE(); }
 {iddef} { return yy::parser::make_IdDef(yytext); }
 
@@ -54,6 +61,8 @@ octal 0[0-7]+
                     << std::endl; 
                     exit(1);
                     }
+
+<<EOF>> { return yy::parser::make_YYEOF(); }
 %%
 
  yy::parser::symbol_type make_Number(const std::string& str, int base) {

@@ -23,6 +23,14 @@ add_executable(
   ${FLEX_lexer_OUTPUTS}
 )
 
+add_executable(
+  codegen
+  codegen.cpp
+  ${BISON_parser_OUTPUTS}
+  ${FLEX_lexer_OUTPUTS}
+)
+
+
 # Add the Verilated circuit to the target
 verilate(
   interactive COVERAGE TRACE

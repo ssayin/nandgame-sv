@@ -13,17 +13,18 @@
 
 %code requires {
 #include <cstdlib>
-#include <iostream>
-#include <string>
-#include <bitset>
 }
 
 %define parse.trace
 %define parse.error detailed
 
 %code {
+#include <iostream>
+#include <string>
+#include <bitset>
+#include "inst.hpp"
+
   #include <map>
-  #include "inst.hpp"
 
 
 #define YY_DECL yy::parser::symbol_type yylex ()
@@ -37,30 +38,7 @@
 
     Inst &inst = reinterpret_cast<Inst&>(inst_buf);
 
-    constexpr uint16_t DstA = 0x4;
-    constexpr uint16_t DstD = 0x2;
-    constexpr uint16_t DstAStar = 0x1;
-
-    constexpr uint16_t InstKindCI = 0x8000;
-
-    constexpr uint16_t ZX0 = 0xFFDF;
-    constexpr uint16_t ZY0 = 0xFFF7;
-    constexpr uint16_t ZX0ZY0 = ZX0 & ZY0;
-    constexpr uint16_t OP0 = 0xFFFD;
-
-
-  constexpr uint16_t make_ci(uint16_t o) {
-      return (o << 6);
-    }
-
-    constexpr uint16_t make_dst(uint16_t d) {
-      return (d << 3);
-    }
-
-    constexpr uint16_t make_expr(uint16_t destination, uint16_t sm_opcode, uint16_t jmp = 0) {
-      return make_dst(destination) | sm_opcode | jmp | InstKindCI;
-    }
-
+    uint16_t instCounter = 0;
 }
 
 %token Comma ","
@@ -86,6 +64,7 @@
 %token JMP "JMP"
 %token <std::string> IdDef "IdDef"
 %token DEFINE "DEFINE"
+%token LABEL "LABEL"
 
 %token <uint16_t> Number "Number"
 
@@ -97,9 +76,14 @@
                                  opt_nd_one
 
 %%
-s: expr { std::bitset<16> bits{$1}; std::cout << bits << std::endl; inst.m_inst = $1; } 
+s: expr { std::bitset<16> bits{$1}; std::cout << bits << std::endl; inst.m_inst = $1; instCounter++; }
  | %empty
-expr:  A Assign Number { $$ = $3; }
+
+expr:  
+  LABEL IdDef {std::cout << "Got label xD" << std::endl;}
+ | DEFINE IdDef Number { macro_defs.emplace(std::make_pair($2, $3)); }
+
+        | A Assign Number { $$ = $3; }
         | A Assign IdDef 
         { 
           auto it = macro_defs.find($3);
@@ -112,7 +96,6 @@ expr:  A Assign Number { $$ = $3; }
         | multi_asgn Assign ci_opt_jump { $$ = make_expr($1, $3); }
         | ci ";" jump { $$ =  make_expr(0, $1, $3); }
         | JMP {  $$ =  make_expr(0, 0, 0x7);  }
-        | DEFINE IdDef Number { macro_defs.emplace(std::make_pair($2, $3)); }
  
 multi_asgn: dst Comma dst Comma dst { $$ = $1 | $3 | $5; }
                    |dst Comma dst { $$ = $1 | $3; }
@@ -177,6 +160,4 @@ jump:
 
 %%
 
-void yy::parser::error (const std::string& m) {
-  std::cerr << m << std::endl;
-}
+void yy::parser::error(const std::string &m) { std::cerr << m << std::endl; }
