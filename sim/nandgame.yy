@@ -25,8 +25,7 @@
   #include "inst.hpp"
 
 
-#define YY_DECL \ 
-    yy::parser::symbol_type yylex ()
+#define YY_DECL yy::parser::symbol_type yylex ()
     YY_DECL;
 
     static std::aligned_storage_t<sizeof(Inst),
@@ -93,7 +92,8 @@
                                  opt_nd_one
 
 %%
-s: expr { std::bitset<16> bits{$1}; std::cout << bits << std::endl; inst.m_inst = $1; }
+s: expr { std::bitset<16> bits{$1}; std::cout << bits << std::endl; inst.m_inst = $1; } 
+ | %empty
 expr:  A Assign Number { $$ = $3; }
         | A Assign ci_opt_jump { $$ = make_expr(DstA, $3); }
         | D Assign ci_opt_jump { $$ = make_expr(DstD, $3); }

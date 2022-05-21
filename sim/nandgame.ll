@@ -12,6 +12,7 @@
 %option noyywrap
 
 %%
+^#.*$ { std::cout << "skipping comment line" << std::endl; }
 0[0-7]+  { return make_Number(yytext, 8); }
 0[xX][0-9a-fA-F]+  { return make_Number(yytext, 16); }
 "1"     { return yy::parser::make_One(); }

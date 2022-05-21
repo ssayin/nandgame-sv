@@ -22,4 +22,6 @@ verilate(
   SOURCES design/computer.sv
 )
 
+include_directories(${CMAKE_BINARY_DIR})
+
 add_subdirectory(sim)

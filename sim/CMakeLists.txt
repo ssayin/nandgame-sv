@@ -23,8 +23,6 @@ add_executable(
   ${FLEX_lexer_OUTPUTS}
 )
 
-# set_property(TARGET nandgame-asm PROPERTY CXX_STANDARD 17)
-
 # Add the Verilated circuit to the target
 verilate(
   interactive COVERAGE TRACE
