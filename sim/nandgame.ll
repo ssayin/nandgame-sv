@@ -11,13 +11,15 @@
 
 iddef [a-zA-Z][a-zA-Z_0-9]*
 dec [0-9]+
+hex 0[xX][0-9a-fA-F]+ 
+octal 0[0-7]+ 
 
 %option noyywrap
 
 %%
 ^#.*$ { std::cout << "skipping comment line" << std::endl; }
-0[0-7]+  { return make_Number(yytext, 8); }
-0[xX][0-9a-fA-F]+  { return make_Number(yytext, 16); }
+{octal} { return make_Number(yytext, 8); }
+{hex} { return make_Number(yytext, 16); }
 "1"     { return yy::parser::make_One(); }
 "0"     { return yy::parser::make_Zero(); }
 {dec}  { return make_Number(yytext, 10); }
@@ -44,7 +46,7 @@ dec [0-9]+
 [ \t]+  {  }
 "LABEL" { std::cout << "got label" << std::endl; }
 "DEFINE" { std::cout << "got define" << std::endl; }
-{iddef} { std::cout << "got def identifier" << std::endl; }
+{iddef} { return yy::parser::make_IdDef(yytext); }
 
 .       { std::cerr << "lexer: token \"" 
                     << yytext[0] 
@@ -68,3 +70,4 @@ dec [0-9]+
     
   return yy::parser::make_Number(ret);
  }
+

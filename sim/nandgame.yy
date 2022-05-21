@@ -22,11 +22,14 @@
 %define parse.error detailed
 
 %code {
+  #include <map>
   #include "inst.hpp"
 
 
 #define YY_DECL yy::parser::symbol_type yylex ()
     YY_DECL;
+
+    std::map<std::string, uint16_t> macro_defs;
 
     static std::aligned_storage_t<sizeof(Inst),
                               std::alignment_of<Inst>::value>
@@ -81,6 +84,7 @@
 %token JNE "JNE"
 %token JLE "JLE"
 %token JMP "JMP"
+%token <std::string> IdDef "IdDef"
 
 %token <uint16_t> Number "Number"
 
@@ -95,6 +99,12 @@
 s: expr { std::bitset<16> bits{$1}; std::cout << bits << std::endl; inst.m_inst = $1; } 
  | %empty
 expr:  A Assign Number { $$ = $3; }
+        | A Assign IdDef 
+        { 
+          auto it = macro_defs.find($3);
+          if (it == macro_defs.end()) { std::cout << $3 << " is not defined" << std::endl; YYABORT; }
+          $$ = it->second; 
+        }
         | A Assign ci_opt_jump { $$ = make_expr(DstA, $3); }
         | D Assign ci_opt_jump { $$ = make_expr(DstD, $3); }
         | AStar Assign ci_opt_jump { $$ =  make_expr(DstAStar, $3);  }
