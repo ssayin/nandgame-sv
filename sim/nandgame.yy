@@ -85,6 +85,7 @@
 %token JLE "JLE"
 %token JMP "JMP"
 %token <std::string> IdDef "IdDef"
+%token DEFINE "DEFINE"
 
 %token <uint16_t> Number "Number"
 
@@ -111,6 +112,7 @@ expr:  A Assign Number { $$ = $3; }
         | multi_asgn Assign ci_opt_jump { $$ = make_expr($1, $3); }
         | ci ";" jump { $$ =  make_expr(0, $1, $3); }
         | JMP {  $$ =  make_expr(0, 0, 0x7);  }
+        | DEFINE IdDef Number { macro_defs.emplace(std::make_pair($2, $3)); }
  
 multi_asgn: dst Comma dst Comma dst { $$ = $1 | $3 | $5; }
                    |dst Comma dst { $$ = $1 | $3; }

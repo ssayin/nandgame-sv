@@ -45,7 +45,7 @@ octal 0[0-7]+
 <<EOF>> { return yy::parser::make_YYEOF(); }
 [ \t]+  {  }
 "LABEL" { std::cout << "got label" << std::endl; }
-"DEFINE" { std::cout << "got define" << std::endl; }
+"DEFINE" { return yy::parser::make_DEFINE(); }
 {iddef} { return yy::parser::make_IdDef(yytext); }
 
 .       { std::cerr << "lexer: token \"" 
