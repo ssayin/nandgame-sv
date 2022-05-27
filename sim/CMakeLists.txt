@@ -20,6 +20,7 @@ include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 add_executable(
   interactive
   interactive.cpp
+  driver.cpp
   ${BISON_parser_OUTPUTS}
   ${FLEX_lexer_OUTPUTS}
 )
@@ -27,6 +28,7 @@ add_executable(
 add_executable(
   codegen
   codegen.cpp
+  driver.cpp
   ${BISON_parser_OUTPUTS}
   ${FLEX_lexer_OUTPUTS}
 )

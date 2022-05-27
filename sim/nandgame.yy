@@ -15,14 +15,18 @@
 #include <string>
 #include <vector>
 #include <optional>
+class driver;
 }
+
+%param { driver& drv }
 
 %define parse.trace
 %define parse.error detailed
 
 %code {
-#define YY_DECL yy::parser::symbol_type yylex ()
-    YY_DECL;
+#include "driver.hpp"
+#define YY_DECL yy::parser::symbol_type yylex (driver& drv)
+  YY_DECL;
 }
 
 %code {
@@ -30,11 +34,6 @@
 #include <iostream>
 #include <bitset>
 #include <map>
-
-Inst& inst;
-uint16_t inst_count = 0;
-std::map<std::string, uint16_t> def;
-std::map<std::string, uint16_t> mod_later;
 }
 
 %token Comma ","
@@ -78,44 +77,31 @@ std::map<std::string, uint16_t> mod_later;
 
 %%
 s:
-  exprs {
-  for (const auto& a : mod_later) {
-    auto it = def.find(a.first);
-    if (it == def.end()) 
-      yy::parser::error(a.first + " is undefined in instruction number " + std::to_string(a.second));
-    else {
-      $1[a.second] = it->second; 
-    }
-  }
-  for (auto a : $1) {
-    std::bitset<16> bits{a};
-    std::cout << bits << std::endl;
-  }
-}
+  exprs { drv.insts = std::move($1); }
 
 exprs:
   expr { 
   if ($1.has_value()) { 
     $$.push_back($1.value()); 
-    inst_count++;
+    drv.inst_count++;
   }
 }
 | exprs expr {
   if ($2.has_value()) {
     $1.push_back($2.value());
-    inst_count++;
+    drv.inst_count++;
   }
   $$ = std::move($1);
 }
 
-end: Newline | YYEOF
+end: Newline
 
 expr:
   A Assign Number end { $$ = std::make_optional($3); }
 | A Assign IdDef end {
-  auto it = def.find($3);
-  if (it == def.end()) {
-    mod_later.emplace(std::make_pair($3, inst_count)); 
+  auto it = drv.def.find($3);
+  if (it == drv.def.end()) {
+    drv.mod_later.emplace(std::make_pair($3, drv.inst_count)); 
     $$ = std::make_optional(0x0);
   }
   else $$ = std::make_optional(it->second);
@@ -129,19 +115,19 @@ expr:
 | JMP end { $$ = make_expr(0, 0, 0x7); }
 
 | LABEL IdDef end { 
-  def.emplace(std::make_pair($2, inst_count));
+  drv.def.emplace(std::make_pair($2, drv.inst_count));
   $$ = std::nullopt;
 }
 | DEFINE IdDef Number end {
-  def.emplace(std::make_pair($2, $3));
+  drv.def.emplace(std::make_pair($2, $3));
   $$ = std::nullopt;
 }
 | DEFINE IdDef Zero end {
-  def.emplace(std::make_pair($2, 0));
+  drv.def.emplace(std::make_pair($2, 0));
   $$ = std::nullopt;
 }
 | DEFINE IdDef One end {
-  def.emplace(std::make_pair($2, 1));
+  drv.def.emplace(std::make_pair($2, 1));
   $$ = std::nullopt;
 }
 | Newline {

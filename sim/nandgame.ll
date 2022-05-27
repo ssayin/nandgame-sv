@@ -6,7 +6,8 @@
 %}
 
 %{
-  #define YY_DECL yy::parser::symbol_type yylex ()
+  class driver;
+  #define YY_DECL yy::parser::symbol_type yylex (driver& drv)
   yy::parser::symbol_type make_Number(const std::string& str, int base);
   void pushbuffer(std::string file);
 %}
@@ -81,8 +82,6 @@ octal 0[0-7]+
 
 {iddef} { return yy::parser::make_IdDef(yytext); }
 
-"@" { return yy::parser::make_YYEOF(); }
-
 .       { std::cerr << "lexer: token \"" 
                     << yytext[0] 
                     << "\" is not expected" 
@@ -93,9 +92,10 @@ octal 0[0-7]+
 <<EOF>> {   
   yypop_buffer_state();
   if (!YY_CURRENT_BUFFER) {
-    return yy::parser::make_YYEOF(); 
+    yyrestart(stdin);
+   yyterminate();
   }
-}
+ }
 %%
 
  yy::parser::symbol_type make_Number(const std::string& str, int base) {
