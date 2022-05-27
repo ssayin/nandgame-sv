@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <optional>
 
 struct Inst {
   uint16_t m_inst;
@@ -23,7 +24,8 @@ constexpr uint16_t make_ci(uint16_t o) { return (o << 6); }
 
 constexpr uint16_t make_dst(uint16_t d) { return (d << 3); }
 
-constexpr uint16_t make_expr(uint16_t destination, uint16_t sm_opcode,
-                             uint16_t jmp = 0) {
-  return make_dst(destination) | sm_opcode | jmp | InstKindCI;
+constexpr std::optional<uint16_t>
+make_expr(uint16_t destination, uint16_t sm_opcode, uint16_t jmp = 0) {
+  return std::make_optional(make_dst(destination) | sm_opcode | jmp |
+                            InstKindCI);
 }

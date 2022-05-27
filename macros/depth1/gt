@@ -1,0 +1,14 @@
+# test needed
+POP_D
+POP_A
+D=D-A
+A=greater
+D;JGT
+D=0
+PUSH_D
+A=end
+JMP
+LABEL greater
+D=-1
+PUSH_D
+LABEL end

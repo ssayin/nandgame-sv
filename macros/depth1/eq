@@ -1,0 +1,14 @@
+# can be faster?
+POP_D
+POP_A
+D=D-A
+A=ne
+D;JNE
+D=-1
+PUSH_D
+A=end
+JMP
+LABEL ne
+D=0
+PUSH_D
+LABEL end

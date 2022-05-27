@@ -68,7 +68,7 @@ int main(int argc, char **argv, char **env) {
     do {
       std::cout << ">> " << std::flush;
     } while (parse()); // get input until no parser err
-    cont->inst = inst.m_inst;
+    // cont->inst = inst.m_inst;
     cont->eval();
 
     cont->clk = !cont->clk;

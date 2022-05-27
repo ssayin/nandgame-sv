@@ -3,6 +3,7 @@ find_package(FLEX)
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
 
+
 bison_target(
   parser nandgame.yy
   ${CMAKE_CURRENT_BINARY_DIR}/parser.cpp
@@ -29,7 +30,6 @@ add_executable(
   ${BISON_parser_OUTPUTS}
   ${FLEX_lexer_OUTPUTS}
 )
-
 
 # Add the Verilated circuit to the target
 verilate(

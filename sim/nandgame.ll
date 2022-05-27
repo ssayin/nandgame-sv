@@ -18,7 +18,7 @@ octal 0[0-7]+
 
 %%
 [ \t]+ ; 
-^#.*$ { std::cout << "skipping comment line" << std::endl; }
+^#.*$ ; 
 
 "1"     { return yy::parser::make_One(); }
 "0"     { return yy::parser::make_Zero(); }
@@ -49,11 +49,13 @@ octal 0[0-7]+
 "JLE"   { return yy::parser::make_JLE();  }
 "JMP"   { return yy::parser::make_JMP();  }
 
-"\n" { return yy::parser::make_YYEOF(); }
+"\n" { return yy::parser::make_Newline(); } 
 
 "LABEL" { return yy::parser::make_LABEL(); }
 "DEFINE" { return yy::parser::make_DEFINE(); }
 {iddef} { return yy::parser::make_IdDef(yytext); }
+
+"@" { return yy::parser::make_YYEOF(); }
 
 .       { std::cerr << "lexer: token \"" 
                     << yytext[0] 

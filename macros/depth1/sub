@@ -1,0 +1,4 @@
+POP_D
+POP_A
+D=A-D
+PUSH_D
