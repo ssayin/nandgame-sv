@@ -35,8 +35,16 @@ void read_handles_vpi() {
     std::string_view vstr = vpi_get_str(vpiName, h);
     v.format = hand.format;
     vpi_get_value(h, &v);
-    std::cout << vstr << ": " << v.value.integer << std::endl; // endl flush
+    std::cout << vstr << ": " << v.value.integer << ", "; // endl flush
   }
+  std::flush(std::cout);
+}
+
+void eval(const std::unique_ptr<Vcontrol> &cont) {
+  cont->eval();
+  VerilatedVpi::callValueCbs();
+  read_handles_vpi();
+  std::cout << "A: " << cont->A << std::endl;
 }
 
 int main(int argc, char **argv, char **env) {
@@ -50,25 +58,28 @@ int main(int argc, char **argv, char **env) {
 
   contextp->internalsDump();
 
-  driver drv;
-  drv();
-
   cont->clk = 0;
-  int i = 0;
-  while (i++ < 2) {
+
+  driver drv;
+  int res = drv();
+  if (!res) {
+    do {
+      contextp->timeInc(1); // 1 timeprecision period passes...
+      if (!cont->clk) {
+        cont->inst = drv.insts.front();
+        drv.insts.pop_front();
+      }
+
+      std::cout << "[ " << contextp->time() << " ] "
+                << "clk=" << std::to_string(cont->clk) << " " << std::flush;
+      eval(cont);
+      cont->clk = !cont->clk;
+    } while (!drv.insts.empty());
+
     contextp->timeInc(1); // 1 timeprecision period passes...
-    // do {
-    //   std::cout << ">> " << std::flush;
-    // } while (parse()); // get input until no parser err
-    //  cont->inst = inst.m_inst;
-    cont->eval();
-
-    cont->clk = !cont->clk;
-    cont->eval();
-    VerilatedVpi::callValueCbs();
-    read_handles_vpi();
-    std::cout << "A: " << cont->A << std::endl;
-
+    std::cout << "[ " << contextp->time() << " ] "
+              << "clk=" << std::to_string(cont->clk) << " " << std::flush;
+    eval(cont);
     cont->clk = !cont->clk;
   }
   cont->final();

@@ -13,7 +13,7 @@
 %code requires {
 #include <cstdlib>
 #include <string>
-#include <vector>
+#include <deque>
 #include <optional>
 class driver;
 }
@@ -31,9 +31,6 @@ class driver;
 
 %code {
 #include "inst.hpp"
-#include <iostream>
-#include <bitset>
-#include <map>
 }
 
 %token Comma ","
@@ -73,7 +70,7 @@ class driver;
                   opt_nd_one
 
 %type <std::optional<uint16_t>> expr
-%type <std::vector<uint16_t>> exprs 
+%type <std::deque<uint16_t>> exprs 
 
 %%
 s:
@@ -82,13 +79,13 @@ s:
 exprs:
   expr { 
   if ($1.has_value()) { 
-    $$.push_back($1.value()); 
+    $$.emplace_back($1.value()); 
     drv.inst_count++;
   }
 }
 | exprs expr {
   if ($2.has_value()) {
-    $1.push_back($2.value());
+    $1.emplace_back($2.value());
     drv.inst_count++;
   }
   $$ = std::move($1);
