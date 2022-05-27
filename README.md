@@ -13,6 +13,10 @@ ninja
 ```sh 
   while read p; do echo "$p" | ./codegen; done < init_stack
 ```
+From 68f82d5 onwards you should use this command:
+```sh 
+  cat init_stack | ./codegen
+```
 
 ### Running interactive nandgame asm
 while in build directory
