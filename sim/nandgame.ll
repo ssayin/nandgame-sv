@@ -1,12 +1,14 @@
 %{
 #include <cstdlib>
 #include <iostream>
+#include <algorithm>
 #include "parser.hpp"
 %}
 
 %{
-#define YY_DECL yy::parser::symbol_type yylex ()
- yy::parser::symbol_type make_Number(const std::string& str, int base);
+  #define YY_DECL yy::parser::symbol_type yylex ()
+  yy::parser::symbol_type make_Number(const std::string& str, int base);
+  void pushbuffer(std::string file);
 %}
 
 iddef [a-zA-Z][a-zA-Z_0-9]*
@@ -53,6 +55,30 @@ octal 0[0-7]+
 
 "LABEL" { return yy::parser::make_LABEL(); }
 "DEFINE" { return yy::parser::make_DEFINE(); }
+
+"INIT_STACK" { pushbuffer(yytext); }
+"PUSH_D" { pushbuffer(yytext); }
+"POP_D" { pushbuffer(yytext); }
+"POP_A" { pushbuffer(yytext); }
+
+"PUSH_VALUE" { }
+
+"ADD" { pushbuffer(yytext); }
+"SUB" { pushbuffer(yytext); }
+"NEG" { pushbuffer(yytext); }
+"AND" { pushbuffer(yytext); }
+"OR" { pushbuffer(yytext); }
+"EQ" { pushbuffer(yytext); }
+"GT" { pushbuffer(yytext); }
+"LT" { pushbuffer(yytext); }
+"NOT" { pushbuffer(yytext); }
+"GOTO" { pushbuffer(yytext); }
+"IF-GOTO" { pushbuffer(yytext); }
+"PUSH_MEM" { pushbuffer(yytext); }
+"POP_MEM" { pushbuffer(yytext); }
+"PUSH_STATIC" {}
+"POP_STATIC" {}
+
 {iddef} { return yy::parser::make_IdDef(yytext); }
 
 "@" { return yy::parser::make_YYEOF(); }
@@ -64,7 +90,12 @@ octal 0[0-7]+
                     exit(1);
                     }
 
-<<EOF>> { return yy::parser::make_YYEOF(); }
+<<EOF>> {   
+  yypop_buffer_state();
+  if (!YY_CURRENT_BUFFER) {
+    return yy::parser::make_YYEOF(); 
+  }
+}
 %%
 
  yy::parser::symbol_type make_Number(const std::string& str, int base) {
@@ -82,3 +113,12 @@ octal 0[0-7]+
   return yy::parser::make_Number(ret);
  }
 
+void pushbuffer(std::string file) {
+  std::transform(file.begin(), file.end(), file.begin(), tolower);
+  yyin = fopen(file.c_str(), "r");
+
+  if (!yyin)
+    throw std::runtime_error("cannot open " + file);
+
+  yypush_buffer_state(yy_create_buffer(yyin, YY_BUF_SIZE));
+}

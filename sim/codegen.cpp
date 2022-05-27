@@ -5,5 +5,6 @@
 
 int main(int argc, char **argv) {
   yy::parser parser;
+  // parser.set_debug_level(true);
   return parser();
 }

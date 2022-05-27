@@ -94,21 +94,31 @@ s:
 }
 
 exprs:
-  expr { if ($1.has_value()) $$.push_back($1.value()); }
+  expr { 
+  if ($1.has_value()) { 
+    $$.push_back($1.value()); 
+    inst_count++;
+  }
+}
 | exprs expr {
-  if ($2.has_value()) $1.push_back($2.value());
+  if ($2.has_value()) {
+    $1.push_back($2.value());
+    inst_count++;
+  }
   $$ = std::move($1);
 }
 
 end: Newline | YYEOF
 
 expr:
-  A Assign Number end { $$ = $3; }
+  A Assign Number end { $$ = std::make_optional($3); }
 | A Assign IdDef end {
   auto it = def.find($3);
-  if (it == def.end()) 
+  if (it == def.end()) {
     mod_later.emplace(std::make_pair($3, inst_count)); 
-  else $$ = it->second;
+    $$ = std::make_optional(0x0);
+  }
+  else $$ = std::make_optional(it->second);
 }
 
 | A Assign ci_opt_jump end { $$ = make_expr(DstA, $3); }
@@ -123,16 +133,19 @@ expr:
   $$ = std::nullopt;
 }
 | DEFINE IdDef Number end {
-def.emplace(std::make_pair($2, $3));
-$$ = std::nullopt;
+  def.emplace(std::make_pair($2, $3));
+  $$ = std::nullopt;
 }
 | DEFINE IdDef Zero end {
-def.emplace(std::make_pair($2, 0));
-$$ = std::nullopt;
+  def.emplace(std::make_pair($2, 0));
+  $$ = std::nullopt;
 }
 | DEFINE IdDef One end {
-def.emplace(std::make_pair($2, 1));
-$$ = std::nullopt;
+  def.emplace(std::make_pair($2, 1));
+  $$ = std::nullopt;
+}
+| Newline {
+  $$ = std::nullopt;
 }
 
 multi_asgn: 
