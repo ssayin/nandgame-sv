@@ -89,8 +89,10 @@ space [ \t]+
 <INITIAL,macro_expand>"IF-GOTO" { pushbuffer(yytext); }
 <INITIAL,macro_expand>"PUSH_MEM" { pushbuffer(yytext); }
 <INITIAL,macro_expand>"POP_MEM" { pushbuffer(yytext); }
-<INITIAL,macro_expand>"PUSH_STATIC" {  }
-<INITIAL,macro_expand>"POP_STATIC" {  }
+
+<INITIAL,macro_expand>"PUSH_STATIC"[ \t]* { BEGIN(expect_num); drv.next_file = "PUSH_STATIC"; }
+
+<INITIAL,macro_expand>"POP_STATIC"[ \t]* { BEGIN(expect_num); drv.next_file = "POP_STATIC"; }
 
 <INITIAL,macro_expand>{iddef} { return yy::parser::make_IdDef(yytext); }
 
