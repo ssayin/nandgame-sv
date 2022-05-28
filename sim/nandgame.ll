@@ -12,6 +12,7 @@
 %{
   #define YY_DECL yy::parser::symbol_type yylex (driver& drv)
   yy::parser::symbol_type make_Number(const std::string& str,int base);
+  uint16_t number_boundary_check(const std::string& str, int base);
   void pushbuffer(std::string file);
 %}
 
@@ -67,8 +68,13 @@ space [ \t]+
 <INITIAL,macro_expand>"POP_A" { pushbuffer(yytext); }
 
 <INITIAL,macro_expand>"PUSH_VALUE"[ \t]* { BEGIN(expect_num); drv.next_file = "PUSH_VALUE"; }
-<expect_num>{dec}[ \t]*\n { drv.arg1 = 0; pushbuffer(drv.next_file); BEGIN(macro_expand); }
-<macro_expand>"$1" { return make_Number("0", 10); }
+<expect_num>{octal}[ \t]*\n { drv.arg1 = number_boundary_check(yytext,8); pushbuffer(drv.next_file); BEGIN(macro_expand); }
+
+<expect_num>{dec}[ \t]*\n { drv.arg1 = number_boundary_check(yytext, 10); pushbuffer(drv.next_file); BEGIN(macro_expand); }
+
+<expect_num>{hex}[ \t]*\n { drv.arg1 = number_boundary_check(yytext, 16); pushbuffer(drv.next_file); BEGIN(macro_expand); }
+
+<macro_expand>"$1" { return yy::parser::make_Number(drv.arg1); }
 
 <INITIAL,macro_expand>"ADD" { pushbuffer(yytext); }
 <INITIAL,macro_expand>"SUB" { pushbuffer(yytext); }
@@ -106,20 +112,25 @@ space [ \t]+
  }
 %%
 
- yy::parser::symbol_type make_Number(const std::string& str,int base) {
+ yy::parser::symbol_type make_Number(const std::string& str,int base) {   
+  return yy::parser::make_Number(number_boundary_check(str, base));
+ }
+
+
+uint16_t number_boundary_check(const std::string& str, int base) {
   errno = 0;
   constexpr uint16_t MAX_ADDR = 0x7FFF;
     uint16_t ret;
   try {
          ret = std::stoi(str.c_str(),NULL, base);
           if (0 > ret || ret > MAX_ADDR) 
-            throw yy::parser::syntax_error ("unsigned integer limit is: 0x7FFF,you gave  " + str);
+            throw std::runtime_error ("unsigned integer limit is: 0x7FFF,you gave  " + str);
   } catch(const std::out_of_range& ex) {
-    std::throw_with_nested(yy::parser::syntax_error ("unsigned integer limit is: 0x7FFF,you gave  " + str));
+    std::throw_with_nested(std::runtime_error("unsigned integer limit is: 0x7FFF,you gave  " + str));
   }
-    
-  return yy::parser::make_Number(ret);
- }
+
+  return ret;
+}
 
 void pushbuffer(std::string file) {
   std::transform(file.begin(),file.end(), file.begin(), tolower);
