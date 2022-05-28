@@ -102,6 +102,7 @@ space [ \t]+
     yyrestart(stdin);
    yyterminate();
   }
+  BEGIN(INITIAL);
  }
 %%
 
