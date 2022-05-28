@@ -11,6 +11,9 @@ int driver::parse() {
     res = parse();
   } catch (const std::exception &e) {
     std::cerr << e.what() << std::endl;
+    def.clear();
+    insts.clear();
+    mod_later.clear();
   }
   if (!res) {
     for (const auto &a : mod_later) {

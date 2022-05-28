@@ -62,10 +62,25 @@ space [ \t]+
 <INITIAL,macro_expand>"LABEL" { return yy::parser::make_LABEL(); }
 <INITIAL,macro_expand>"DEFINE" { return yy::parser::make_DEFINE(); }
 
-<INITIAL,macro_expand>"INIT_STACK" { pushbuffer(yytext); }
-<INITIAL,macro_expand>"PUSH_D" { pushbuffer(yytext); }
-<INITIAL,macro_expand>"POP_D" { pushbuffer(yytext); }
-<INITIAL,macro_expand>"POP_A" { pushbuffer(yytext); }
+<INITIAL,macro_expand>
+"INIT_STACK" | 
+"PUSH_D" |
+"POP_D" |
+"POP_A" |
+"ADD" | 
+"SUB" | 
+"NEG" | 
+"AND" |
+"OR" |
+"EQ" | 
+"GT" |
+"LT" |
+"NOT" |
+"GOTO" |
+"IF-GOTO" |
+"PUSH_MEM" |
+"POP_MEM" { pushbuffer(yytext); }
+
 
 <INITIAL,macro_expand>"PUSH_VALUE"[ \t]* { BEGIN(expect_num); drv.next_file = "PUSH_VALUE"; }
 <expect_num>{octal}[ \t]*\n { drv.arg1 = number_boundary_check(yytext,8); pushbuffer(drv.next_file); BEGIN(macro_expand); }
@@ -75,20 +90,6 @@ space [ \t]+
 <expect_num>{hex}[ \t]*\n { drv.arg1 = number_boundary_check(yytext, 16); pushbuffer(drv.next_file); BEGIN(macro_expand); }
 
 <macro_expand>"$1" { return yy::parser::make_Number(drv.arg1); }
-
-<INITIAL,macro_expand>"ADD" { pushbuffer(yytext); }
-<INITIAL,macro_expand>"SUB" { pushbuffer(yytext); }
-<INITIAL,macro_expand>"NEG" { pushbuffer(yytext); }
-<INITIAL,macro_expand>"AND" { pushbuffer(yytext); }
-<INITIAL,macro_expand>"OR" { pushbuffer(yytext); }
-<INITIAL,macro_expand>"EQ" { pushbuffer(yytext); }
-<INITIAL,macro_expand>"GT" { pushbuffer(yytext); }
-<INITIAL,macro_expand>"LT" { pushbuffer(yytext); }
-<INITIAL,macro_expand>"NOT" { pushbuffer(yytext); }
-<INITIAL,macro_expand>"GOTO" { pushbuffer(yytext); }
-<INITIAL,macro_expand>"IF-GOTO" { pushbuffer(yytext); }
-<INITIAL,macro_expand>"PUSH_MEM" { pushbuffer(yytext); }
-<INITIAL,macro_expand>"POP_MEM" { pushbuffer(yytext); }
 
 <INITIAL,macro_expand>"PUSH_STATIC"[ \t]* { BEGIN(expect_num); drv.next_file = "PUSH_STATIC"; }
 
