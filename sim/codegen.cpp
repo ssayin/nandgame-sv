@@ -4,6 +4,6 @@
 #include <iostream>
 
 int main(int argc, char **argv) {
-  driver drv;
+  nandgame::driver drv;
   return drv();
 }

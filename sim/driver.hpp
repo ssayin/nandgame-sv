@@ -5,9 +5,14 @@
 #include <map>
 #include <string>
 
+#include "lexer.hpp"
+#include "parser.hpp"
+
+namespace nandgame {
 class driver {
+
 public:
-  driver() = default;
+  driver() noexcept;
   int parse();
   int operator()();
 
@@ -17,4 +22,10 @@ public:
   std::deque<uint16_t> insts;
   uint16_t arg1;
   std::string next_file;
+
+  lexer lx;
+  parser pr;
+
+private:
 };
+} // namespace nandgame

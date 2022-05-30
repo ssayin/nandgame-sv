@@ -1,14 +1,15 @@
 #include "driver.hpp"
-#include "parser.hpp"
 
 #include <bitset>
-#include <iostream>
+
+using namespace nandgame;
+
+driver::driver() noexcept : lx(*this), pr(lx, *this) {}
 
 int driver::parse() {
-  yy::parser parse(*this);
   int res = 0;
   try {
-    res = parse();
+    res = pr.parse();
   } catch (const std::exception &e) {
     std::cerr << e.what() << std::endl;
     def.clear();

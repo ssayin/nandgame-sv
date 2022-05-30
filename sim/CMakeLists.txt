@@ -5,12 +5,12 @@ include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
 
 
 bison_target(
-  parser nandgame.yy
+  parser parser.yy
   ${CMAKE_CURRENT_BINARY_DIR}/parser.cpp
 )
 
 flex_target(
-  lexer nandgame.ll
+  lexer lexer.ll
   ${CMAKE_CURRENT_BINARY_DIR}/lexer.cpp
 )
 

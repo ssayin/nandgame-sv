@@ -8,6 +8,7 @@
 %define api.value.type variant
 //%define api.value.automove
 %define parse.assert
+%define api.namespace { nandgame }
 
 
 %code requires {
@@ -15,23 +16,31 @@
 #include <string>
 #include <deque>
 #include <optional>
-class driver;
+
+namespace nandgame {
+  class driver;
+  class lexer;
+}
 }
 
-%param { driver& drv }
+%code {
+  #include "inst.hpp"
+  #include "lexer.hpp"
+  #include "parser.hpp"
+  #include "driver.hpp"
+
+  static nandgame::parser::symbol_type yylex(nandgame::lexer &lx, nandgame::driver &drv) {
+    return lx.lex();
+  }
+    
+  using namespace nandgame;
+}
+
+%param { nandgame::lexer &lx }
+%param { nandgame::driver &drv }
 
 %define parse.trace
 %define parse.error detailed
-
-%code {
-#include "driver.hpp"
-#define YY_DECL yy::parser::symbol_type yylex (driver& drv)
-  YY_DECL;
-}
-
-%code {
-#include "inst.hpp"
-}
 
 %token Comma ","
 %token One "1"
@@ -58,6 +67,7 @@ class driver;
 %token DEFINE "DEFINE"
 %token LABEL "LABEL"
 %token Newline "Newline"
+%token END 0
 
 %token <uint16_t> Number "Number"
 
@@ -210,4 +220,6 @@ jump:
 | JMP { $$ = 7; }
 %%
 
-void yy::parser::error(const std::string &m) { std::cerr << "error: " <<  m << std::endl; }
+void nandgame::parser::error(const std::string &m) { 
+  std::cerr << "error: " <<  m << std::endl; 
+}

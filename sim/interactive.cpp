@@ -60,7 +60,7 @@ int main(int argc, char **argv, char **env) {
 
   cont->clk = 0;
 
-  driver drv;
+  nandgame::driver drv;
   int res = drv();
   if (!res) {
     do {
