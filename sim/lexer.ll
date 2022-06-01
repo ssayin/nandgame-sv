@@ -135,6 +135,8 @@ uint16_t number_boundary_check(const std::string& str, int base) {
 }
 
 void nandgame::lexer::pushbuffer(std::string file) { 
+  constexpr std::size_t max_buf_stack_size = 5; // looks good for the time being
+  if (ifsStack.size() > max_buf_stack_size) throw std::runtime_error("nested macro inclusion limit is exceeded"); 
   std::transform(file.begin(),file.end(), file.begin(), tolower);
   ifsStack.emplace_front(std::make_unique<std::ifstream>(file, std::ifstream::in));
   yypush_buffer_state(yy_create_buffer(*(ifsStack.front()), 100));
