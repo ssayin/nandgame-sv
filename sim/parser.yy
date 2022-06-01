@@ -71,13 +71,22 @@ namespace nandgame {
 
 %token <uint16_t> Number "Number"
 
+%token MacroStr "MacroStr"
+%token MacroNum "MacroNum"
+
+%token <std::string> Macro1 "Macro1"
+%token <std::string> Macro2 "Macro2"
+
 %type <uint16_t>  dst multi_asgn 
-                  jump addr 
-                  opt_naddr opt_nd ci 
+                  jump addr opt_naddr opt_nd ci 
                   ci_opt_jump binary_op
                   d_one addr_one
                   opt_naddr_one
                   opt_nd_one
+                  num_or_macronum
+                  num_or_macronum_oz
+
+%type <std::string> iddef_or_macrostr
 
 %type <std::optional<uint16_t>> expr
 %type <std::deque<uint16_t>> exprs 
@@ -104,7 +113,7 @@ exprs:
 end: Newline
 
 expr:
-  A Assign Number end { $$ = std::make_optional($3); }
+  A Assign num_or_macronum end { $$ = std::make_optional($3); }
 | A Assign IdDef end {
   auto it = drv.def.find($3);
   if (it == drv.def.end()) {
@@ -137,9 +146,38 @@ expr:
   drv.def.emplace(std::make_pair($2, 1));
   $$ = std::nullopt;
 }
+| Macro1 num_or_macronum_oz end { 
+  drv.arg_stack.emplace_front(driver::Arg{$2, std::nullopt});
+  drv.lx.pushbuffer($1); 
+}
+| Macro2 iddef_or_macrostr num_or_macronum end { 
+  drv.arg_stack.emplace_front(driver::Arg{$3, $2});
+  drv.lx.pushbuffer($1); 
+}
 | Newline {
   $$ = std::nullopt;
 }
+
+iddef_or_macrostr: 
+  IdDef { $$ = std::move($1); }
+| MacroStr { 
+  auto id = drv.arg_stack.front().id;
+  if (!id.has_value()) throw std::runtime_error("error: macrostr is not assigned"); 
+  $$ = std::move(id.value());
+}
+
+
+num_or_macronum:
+  Number { $$ = $1; }
+| MacroNum {
+  if(drv.arg_stack.empty()) throw std::runtime_error("arg stack is empty"); 
+  $$ = drv.arg_stack.front().num; 
+}
+
+num_or_macronum_oz:
+  num_or_macronum { $$ = $1; }
+| One { $$ = 1; }
+| Zero { $$ = 0; }
 
 multi_asgn: 
   dst Comma dst Comma dst { $$ = $1 | $3 | $5; }

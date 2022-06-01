@@ -7,25 +7,32 @@
 
 #include "lexer.hpp"
 #include "parser.hpp"
+#include <optional>
 
 namespace nandgame {
+
 class driver {
+  using instruction_type = uint16_t;
 
 public:
+  struct Arg {
+    instruction_type num;
+    std::optional<std::string> id;
+  };
+
   driver() noexcept;
   int parse();
   int operator()();
 
-  uint16_t inst_count = 0;
-  std::map<std::string, uint16_t> def;
-  std::map<std::string, uint16_t> mod_later;
-  std::deque<uint16_t> insts;
-  uint16_t arg1;
+  instruction_type inst_count = 0;
+  std::map<std::string, instruction_type> def;
+  std::map<std::string, instruction_type> mod_later;
+  std::deque<instruction_type> insts;
+  std::deque<Arg> arg_stack;
+  instruction_type arg1;
   std::string next_file;
 
   lexer lx;
   parser pr;
-
-private:
 };
 } // namespace nandgame

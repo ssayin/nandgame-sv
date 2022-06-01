@@ -6,14 +6,12 @@
 #define yyterminate() nandgame::parser::make_END();
 %}
 
-%x expect_num 
-%x macro_expand 
-
 %{
   #include <algorithm>
+  #include <fstream>
+  #include <memory>
   nandgame::parser::symbol_type make_Number(const std::string& str,int base);
   uint16_t number_boundary_check(const std::string& str, int base);
-  void pushbuffer(std::string file);
 %}
 
 iddef [a-zA-Z][a-zA-Z_0-9]*
@@ -25,42 +23,42 @@ space [ \t]+
 %option noyywrap c++ yyclass="lexer" prefix="nandgame"
 
 %%
-<*>{space} ; 
-<INITIAL,macro_expand>^#.*$ ; 
+{space} ; 
+^#.*$ ; 
 
-<INITIAL,macro_expand>"1"     { return nandgame::parser::make_One(); }
-<INITIAL,macro_expand>"0"     { return nandgame::parser::make_Zero(); }
+"1"     { return nandgame::parser::make_One(); }
+"0"     { return nandgame::parser::make_Zero(); }
 
 
-<INITIAL,macro_expand>"D"     { return nandgame::parser::make_D(); }
-<INITIAL,macro_expand>"A"     { return nandgame::parser::make_A();}
-<INITIAL,macro_expand>"*A"    { return nandgame::parser::make_AStar(); }
+"D"     { return nandgame::parser::make_D(); }
+"A"     { return nandgame::parser::make_A();}
+"*A"    { return nandgame::parser::make_AStar(); }
 
 {octal} { return make_Number(yytext,8); }
 {dec}   { return make_Number(yytext,10); }
 {hex}   { return make_Number(yytext,16); }
 
-<INITIAL,macro_expand>"+"     { return nandgame::parser::make_Plus(); }
-<INITIAL,macro_expand>"-"     { return nandgame::parser::make_Minus(); }
-<INITIAL,macro_expand>"&"     { return nandgame::parser::make_And(); }
-<INITIAL,macro_expand>"~"     { return nandgame::parser::make_Not(); }
-<INITIAL,macro_expand>";"     { return nandgame::parser::make_Semicolon(); }
-<INITIAL,macro_expand>","     { return nandgame::parser::make_Comma(); }
-<INITIAL,macro_expand>"="     { return nandgame::parser::make_Assign(); }
-<INITIAL,macro_expand>"|"     { return nandgame::parser::make_Or(); }
+"+"     { return nandgame::parser::make_Plus(); }
+"-"     { return nandgame::parser::make_Minus(); }
+"&"     { return nandgame::parser::make_And(); }
+"~"     { return nandgame::parser::make_Not(); }
+";"     { return nandgame::parser::make_Semicolon(); }
+","     { return nandgame::parser::make_Comma(); }
+"="     { return nandgame::parser::make_Assign(); }
+"|"     { return nandgame::parser::make_Or(); }
 
-<INITIAL,macro_expand>"JGT"   { return nandgame::parser::make_JGT();  }
-<INITIAL,macro_expand>"JEQ"   { return nandgame::parser::make_JEQ(); }
-<INITIAL,macro_expand>"JGE"   { return nandgame::parser::make_JGE();  }
-<INITIAL,macro_expand>"JLT"   { return nandgame::parser::make_JLT();  }
-<INITIAL,macro_expand>"JNE"   { return nandgame::parser::make_JNE(); }
-<INITIAL,macro_expand>"JLE"   { return nandgame::parser::make_JLE();  }
-<INITIAL,macro_expand>"JMP"   { return nandgame::parser::make_JMP();  }
+"JGT"   { return nandgame::parser::make_JGT();  }
+"JEQ"   { return nandgame::parser::make_JEQ();  }
+"JGE"   { return nandgame::parser::make_JGE();  }
+"JLT"   { return nandgame::parser::make_JLT();  }
+"JNE"   { return nandgame::parser::make_JNE();  }
+"JLE"   { return nandgame::parser::make_JLE();  }
+"JMP"   { return nandgame::parser::make_JMP();  }
 
-<*>"\n" { return nandgame::parser::make_Newline(); } 
-<INITIAL,macro_expand>"LABEL" { return nandgame::parser::make_LABEL(); }
-<INITIAL,macro_expand>"DEFINE" { return nandgame::parser::make_DEFINE(); }
-<INITIAL,macro_expand>
+"\n" { return nandgame::parser::make_Newline(); } 
+"LABEL" { return nandgame::parser::make_LABEL(); }
+"DEFINE" { return nandgame::parser::make_DEFINE(); }
+
 "INIT_STACK" | 
 "PUSH_D" |
 "POP_D" |
@@ -74,19 +72,34 @@ space [ \t]+
 "GT" |
 "LT" |
 "NOT" |
+"PUSH_MEM" |
+"POP_MEM" |
+"RETURN" { pushbuffer(yytext); }
+
+"PUSH_VALUE" |
 "GOTO" |
 "IF-GOTO" |
-"PUSH_MEM" |
-"POP_MEM" { pushbuffer(yytext); }
-<INITIAL,macro_expand>"PUSH_VALUE"[ \t]* { BEGIN(expect_num); drv.next_file = "PUSH_VALUE"; }
-<expect_num>{octal}[ \t]*\n { drv.arg1 = number_boundary_check(yytext,8); pushbuffer(drv.next_file); BEGIN(macro_expand); }
-<expect_num>{dec}[ \t]*\n { drv.arg1 = number_boundary_check(yytext, 10); pushbuffer(drv.next_file); BEGIN(macro_expand); }
-<expect_num>{hex}[ \t]*\n { drv.arg1 = number_boundary_check(yytext, 16); pushbuffer(drv.next_file); BEGIN(macro_expand); }
-<macro_expand>"$1" { return nandgame::parser::make_Number(drv.arg1); }
-<INITIAL,macro_expand>"PUSH_STATIC"[ \t]* { BEGIN(expect_num); drv.next_file = "PUSH_STATIC"; }
-<INITIAL,macro_expand>"POP_STATIC"[ \t]* { BEGIN(expect_num); drv.next_file = "POP_STATIC"; }
-<INITIAL,macro_expand>{iddef} { return nandgame::parser::make_IdDef(yytext); }
-<*>.       { std::cerr<< "lexer: token \"" 
+"PUSH_STATIC" |
+"POP_STATIC" |
+"PUSH_ARG" |
+"POP_ARG" |
+"PUSH_LOCAL" |
+"POP_LOCAL" { return nandgame::parser::make_Macro1(yytext); }
+
+"CALL" |
+"FUNCTION" { return nandgame::parser::make_Macro2(yytext); }
+
+"$num" { 
+  return nandgame::parser::make_MacroNum();
+}
+"$str" {
+  return nandgame::parser::make_MacroStr();
+}
+
+
+{iddef} { return nandgame::parser::make_IdDef(yytext); }
+
+.       { std::cerr<< "lexer: token \"" 
                    << yytext[0] 
                    << "\" is not expected" 
                    << std::endl; 
@@ -95,10 +108,10 @@ space [ \t]+
 
 <<EOF>> {   
   yypop_buffer_state();
-  if (!YY_CURRENT_BUFFER) {
+  if (!ifsStack.empty()) ifsStack.pop_front();
+  if (!drv.arg_stack.empty()) drv.arg_stack.pop_front();
+  if (!YY_CURRENT_BUFFER)
    return yyterminate();
-  }
-  BEGIN(INITIAL);
  }
 %%
 
@@ -108,9 +121,8 @@ space [ \t]+
 
 
 uint16_t number_boundary_check(const std::string& str, int base) {
-  errno = 0;
   constexpr uint16_t MAX_ADDR = 0x7FFF;
-    uint16_t ret;
+  uint16_t ret;
   try {
          ret = std::stoi(str.c_str(),NULL, base);
           if (0 > ret || ret > MAX_ADDR) 
@@ -122,13 +134,8 @@ uint16_t number_boundary_check(const std::string& str, int base) {
   return ret;
 }
 
-void pushbuffer(std::string file) {
-/*  std::transform(file.begin(),file.end(), file.begin(), tolower);
-  yyin = fopen(file.c_str(),"r");
-
-  if (!yyin)
-    throw std::runtime_error("cannot open " + file);
-
-  yypush_buffer_state(yy_create_buffer(yyin,YY_BUF_SIZE));
-  */
+void nandgame::lexer::pushbuffer(std::string file) { 
+  std::transform(file.begin(),file.end(), file.begin(), tolower);
+  ifsStack.emplace_front(std::make_unique<std::ifstream>(file, std::ifstream::in));
+  yypush_buffer_state(yy_create_buffer(*(ifsStack.front()), 100));
 }
