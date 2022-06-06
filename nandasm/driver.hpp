@@ -29,7 +29,6 @@ public:
   std::map<std::string, instruction_type> mod_later;
   std::deque<instruction_type> insts;
   std::deque<Arg> arg_stack;
-  std::string next_file;
 
   lexer lx;
   parser pr;
