@@ -1,5 +1,6 @@
 add_executable(
   interactive
+  VPIObject.cpp
   interactive.cpp
 )
 
@@ -10,6 +11,7 @@ target_include_directories(
   "${PROJECT_BINARY_DIR}"
   "${PROJECT_SOURCE_DIR}"
 )
+
 add_executable(
   codegen
   codegen.cpp

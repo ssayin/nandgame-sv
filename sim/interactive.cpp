@@ -6,57 +6,10 @@
 #include <string>
 #include <verilated.h>
 #include <verilated_vcd_c.h>
-#include <verilated_vpi.h>
+
+#include "VPIObject.hpp"
 
 double sc_time_stamp() { return 0; }
-
-struct handle {
-  std::string str;
-  PLI_INT32 format;
-};
-
-class VPIObject {
-public:
-  VPIObject(const std::string &name);
-  VPIObject(VPIObject &p, std::size_t index);
-  ~VPIObject();
-
-  int readInteger();
-  void putInteger(int val);
-  std::string getStr();
-
-private:
-  vpiHandle h;
-  s_vpi_value v;
-};
-
-VPIObject::VPIObject(const std::string &name) {
-  h = vpi_handle_by_name((PLI_BYTE8 *)name.c_str(), NULL);
-  if (!h)
-    throw std::runtime_error("");
-}
-
-VPIObject::VPIObject(VPIObject &p, std::size_t index) {
-  h = vpi_handle_by_index(p.h, index);
-  if (!h)
-    throw std::runtime_error("");
-}
-
-VPIObject::~VPIObject() { vpi_free_object(h); }
-
-int VPIObject::readInteger() {
-  v.format = vpiIntVal;
-  vpi_get_value(h, &v);
-  return v.value.integer;
-}
-
-void VPIObject::putInteger(int val) {
-  v.format = vpiIntVal;
-  v.value.integer = val;
-  vpi_put_value(h, &v, NULL, vpiNoDelay);
-}
-
-std::string VPIObject::getStr() { return vpi_get_str(vpiName, h); }
 
 void init_instruction_rom(std::deque<uint16_t> &insts) {
   VPIObject rom("Computer.computer.rom0.mem");
