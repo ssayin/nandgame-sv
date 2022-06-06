@@ -3,12 +3,6 @@
 #include <cstdint>
 #include <optional>
 
-struct Inst {
-  uint16_t m_inst;
-};
-
-extern Inst &inst;
-
 constexpr uint16_t DstA = 0x4;
 constexpr uint16_t DstD = 0x2;
 constexpr uint16_t DstAStar = 0x1;

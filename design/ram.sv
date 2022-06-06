@@ -9,8 +9,7 @@ module ram #(
     output logic [(DATA_WIDTH-1):0] out
 );
 
-  logic [DATA_WIDTH-1:0] ram[2**ADDR_WIDTH];
-
+  logic [DATA_WIDTH-1:0] ram[2**ADDR_WIDTH]  /*verilator public_flat_rw*/;
   always @(negedge clk) begin
     if (st) ram[addr] <= x;
   end

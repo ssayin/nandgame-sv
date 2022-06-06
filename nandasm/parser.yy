@@ -55,7 +55,6 @@ namespace nandgame {
 %token And "&"
 %token Plus "+"
 %token Or "|"
-//%token End "\n"
 %token JGT "JGT"
 %token JEQ "JEQ"
 %token JGE "JGE"
@@ -165,7 +164,6 @@ iddef_or_macrostr:
   if (!id.has_value()) throw std::runtime_error("error: macrostr is not assigned"); 
   $$ = std::move(id.value());
 }
-
 
 num_or_macronum:
   Number { $$ = $1; }
