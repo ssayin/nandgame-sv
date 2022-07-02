@@ -29,6 +29,6 @@ endif()
 verilate(
   interactive COVERAGE TRACE
   INCLUDE_DIRS "../design"
-  VERILATOR_ARGS -f input.vc -Os --vpi -x-assign 0
+  VERILATOR_ARGS -f input.vc --vpi -x-assign 0
   SOURCES ../design/computer.sv
 )
